@@ -1,0 +1,48 @@
+{
+  "name": "store-analytics",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "prisma generate && next build",
+    "start": "next start",
+    "lint": "next lint",
+    "postinstall": "prisma generate",
+    "db:migrate": "prisma migrate deploy",
+    "db:migrate:dev": "prisma migrate dev",
+    "db:seed": "tsx prisma/seed.ts"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
+  },
+  "dependencies": {
+    "next": "15.1.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "@prisma/client": "^5.22.0",
+    "@reduxjs/toolkit": "^2.3.0",
+    "react-redux": "^9.1.2",
+    "bcryptjs": "^2.4.3",
+    "jose": "^5.9.6",
+    "zod": "^3.23.8",
+    "recharts": "^2.13.0",
+    "date-fns": "^4.1.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.3",
+    "@types/node": "^20.17.6",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@types/bcryptjs": "^2.4.6",
+    "tailwindcss": "^3.4.14",
+    "postcss": "^8.4.49",
+    "autoprefixer": "^10.4.20",
+    "prisma": "^5.22.0",
+    "tsx": "^4.19.2",
+    "eslint": "^8.57.1",
+    "eslint-config-next": "15.1.0"
+  },
+  "engines": {
+    "node": ">=18.18.0"
+  }
+}
