@@ -65,7 +65,7 @@ export default function StatisticsPage() {
           <div className="card">
             <h2 className="section-title mb-2">Export CSV</h2>
             <div className="flex gap-2 flex-wrap">
-              {["daily", "sales", "improvements"].map((t) => (
+              {["daily", "sales", "stock", "improvements"].map((t) => (
                 <button key={t} onClick={() => handleExport(t)} className="btn-secondary text-xs capitalize">{t}</button>
               ))}
             </div>

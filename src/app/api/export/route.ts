@@ -57,5 +57,27 @@ export async function GET(request: NextRequest) {
     return new NextResponse(csv, { headers: { "Content-Type": "text/csv", "Content-Disposition": 'attachment; filename="improvements.csv"' } });
   }
 
+  if (type === "stock") {
+    const items = await prisma.stockItem.findMany({ orderBy: { createdAt: "desc" } });
+    const rows = items.map((i) => ({
+      name: i.name ?? "",
+      model: i.model ?? "",
+      units: i.units,
+      purchasePrice: i.purchasePrice == null ? "" : Number(i.purchasePrice).toFixed(2),
+      salePrice: i.salePrice == null ? "" : Number(i.salePrice).toFixed(2),
+      stockValue:
+        i.purchasePrice == null ? "" : (Number(i.purchasePrice) * i.units).toFixed(2),
+      notes: i.notes ?? "",
+      createdAt: i.createdAt.toISOString(),
+    }));
+    const csv = buildCsv(rows, [
+      { key: "name", header: "Name" }, { key: "model", header: "Model" },
+      { key: "units", header: "Units" }, { key: "purchasePrice", header: "Purchase Price (KES)" },
+      { key: "salePrice", header: "Sale Price (KES)" }, { key: "stockValue", header: "Stock Value (KES)" },
+      { key: "notes", header: "Notes" }, { key: "createdAt", header: "Created At" },
+    ]);
+    return new NextResponse(csv, { headers: { "Content-Type": "text/csv", "Content-Disposition": 'attachment; filename="stock.csv"' } });
+  }
+
   return NextResponse.json({ error: "Invalid export type" }, { status: 400 });
 }
