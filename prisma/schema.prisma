@@ -1,0 +1,137 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+/// Application users. Currently a single admin user, designed for easy expansion.
+model User {
+  id           String   @id @default(cuid())
+  username     String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+
+  @@map("users")
+}
+
+/// One record per calendar day, capturing traffic, visitors, buyers and context.
+model DailyRecord {
+  id   String   @id @default(cuid())
+  date DateTime @unique @db.Date
+
+  // Traffic
+  foreignPassers Int @default(0)
+  localPassers   Int @default(0)
+
+  // Visitors
+  foreignVisitors Int @default(0)
+  localVisitors   Int @default(0)
+
+  // Buyers
+  foreignBuyers Int @default(0)
+  localBuyers   Int @default(0)
+
+  // Context
+  weather      String?
+  dayType      String?
+  specialNotes String?
+
+  // Text areas
+  missingProducts String?
+  notes           String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  sales Sale[]
+
+  @@map("daily_records")
+  @@index([date])
+}
+
+enum SaleType {
+  foreign
+  local
+}
+
+/// A single sale transaction, always linked to a DailyRecord.
+model Sale {
+  id        String   @id @default(cuid())
+  date      DateTime @db.Date
+  type      SaleType
+  amountKes Decimal  @db.Decimal(12, 2)
+  items     String?
+
+  dailyRecordId String
+  dailyRecord   DailyRecord @relation(fields: [dailyRecordId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  saleItems SaleItem[]
+
+  @@map("sales")
+  @@index([dailyRecordId])
+  @@index([date])
+  @@index([type])
+}
+
+/// Products available in the shop inventory.
+model StockItem {
+  id            String   @id @default(cuid())
+  name          String?
+  model         String?
+  purchasePrice Decimal? @db.Decimal(12, 2)
+  salePrice     Decimal? @db.Decimal(12, 2)
+  notes         String?
+  units         Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  saleItems SaleItem[]
+
+  @@map("stock_items")
+  @@index([name])
+}
+
+/// Structured sale line items. `stockItemId` is null for "Other" items.
+model SaleItem {
+  id          String   @id @default(cuid())
+  saleId      String
+  sale        Sale     @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  stockItemId String?
+  stockItem   StockItem? @relation(fields: [stockItemId], references: [id], onDelete: SetNull)
+  label       String
+  quantity    Int      @default(1)
+  unitPriceKes Decimal? @db.Decimal(12, 2)
+  createdAt   DateTime @default(now())
+
+  @@map("sale_items")
+  @@index([saleId])
+  @@index([stockItemId])
+}
+
+enum ImprovementType {
+  Signage
+  Product
+  Promotion
+  Layout
+  Pricing
+  Staff
+  Other
+}
+
+/// Operational improvements made to the store, used for before/after impact analysis.
+model Improvement {
+  id                 String          @id @default(cuid())
+  title              String
+  type               ImprovementType
+  description        String?
+  implementationDate DateTime        @db.Date
+  createdAt          DateTime        @default(now())
+
+  @@map("improvements")
+  @@index([implementationDate])
+}
