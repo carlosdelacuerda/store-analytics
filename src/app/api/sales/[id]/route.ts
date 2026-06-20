@@ -13,15 +13,10 @@ export async function DELETE(
 ) {
   const { id } = await params;
 
-  let sale;
-  try {
-    sale = await prisma.sale.findUnique({
-      where: { id },
-      include: { saleItems: true },
-    });
-  } catch {
-    sale = await prisma.sale.findUnique({ where: { id } });
-  }
+  const sale = await prisma.sale.findUnique({
+    where: { id },
+    include: { saleItems: true },
+  });
   if (!sale) {
     return NextResponse.json({ error: "Sale not found" }, { status: 404 });
   }
@@ -30,13 +25,11 @@ export async function DELETE(
 
   const record = await prisma.$transaction(
     async (tx) => {
-      const saleItems = "saleItems" in sale ? sale.saleItems ?? [] : [];
-
       // Restore stock for all lines concurrently instead of one-by-one —
       // keeps the transaction short so it doesn't outlive Prisma's timeout
       // or a Neon cold-start delay.
       await Promise.all(
-        saleItems
+        sale.saleItems
           .filter((line) => line.stockItemId)
           .map((line) =>
             tx.stockItem.update({
@@ -74,15 +67,8 @@ export async function DELETE(
 }
 
 async function findRecordForResponse(id: string) {
-  try {
-    return await prisma.dailyRecord.findUnique({
-      where: { id },
-      include: { sales: { include: { saleItems: true } } },
-    });
-  } catch {
-    return prisma.dailyRecord.findUnique({
-      where: { id },
-      include: { sales: true },
-    });
-  }
+  return prisma.dailyRecord.findUnique({
+    where: { id },
+    include: { sales: { include: { saleItems: true } } },
+  });
 }

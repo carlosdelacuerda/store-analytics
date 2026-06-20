@@ -8,17 +8,10 @@ import { EmptyDailyRecordDTO } from "@/types";
 const DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
 
 async function findRecordForResponse(where: { id: string } | { date: Date }) {
-  try {
-    return await prisma.dailyRecord.findUnique({
-      where,
-      include: { sales: { include: { saleItems: true } } },
-    });
-  } catch {
-    return prisma.dailyRecord.findUnique({
-      where,
-      include: { sales: true },
-    });
-  }
+  return prisma.dailyRecord.findUnique({
+    where,
+    include: { sales: { include: { saleItems: true } } },
+  });
 }
 
 function emptyRecord(date: string): EmptyDailyRecordDTO {
@@ -138,10 +131,9 @@ export async function DELETE(
 
   await prisma.$transaction(
     async (tx) => {
-      const linesToRestore = record.sales.flatMap((sale) => {
-        const saleItems = "saleItems" in sale ? sale.saleItems ?? [] : [];
-        return saleItems.filter((line) => line.stockItemId);
-      });
+      const linesToRestore = record.sales.flatMap((sale) =>
+        sale.saleItems.filter((line) => line.stockItemId)
+      );
 
       // Restore stock for every sale line across the whole day concurrently,
       // then delete the record. Keeping this transaction short avoids

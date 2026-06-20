@@ -20,20 +20,11 @@ export async function GET(request: NextRequest) {
     if (to) where.date.lte = dateStringToUTCDate(to);
   }
 
-  let records;
-  try {
-    records = await prisma.dailyRecord.findMany({
-      where,
-      include: { sales: { include: { saleItems: true } } },
-      orderBy: { date: "asc" },
-    });
-  } catch {
-    records = await prisma.dailyRecord.findMany({
-      where,
-      include: { sales: true },
-      orderBy: { date: "asc" },
-    });
-  }
+  const records = await prisma.dailyRecord.findMany({
+    where,
+    include: { sales: { include: { saleItems: true } } },
+    orderBy: { date: "asc" },
+  });
 
   return NextResponse.json(records.map(serializeDailyRecord));
 }

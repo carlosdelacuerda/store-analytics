@@ -104,7 +104,7 @@ export async function POST(request: NextRequest) {
     await Promise.all(
       saleItems.flatMap((line) => {
         const stockItem = line.stockItemId ? stockById.get(line.stockItemId) : null;
-        const ops = [
+        return [
           tx.saleItem.create({
             data: {
               saleId: sale.id,
@@ -114,16 +114,15 @@ export async function POST(request: NextRequest) {
               unitPriceKes: line.unitPriceKes ?? stockItem?.salePrice ?? null,
             },
           }),
+          ...(line.stockItemId
+            ? [
+                tx.stockItem.update({
+                  where: { id: line.stockItemId },
+                  data: { units: { decrement: line.quantity } },
+                }),
+              ]
+            : []),
         ];
-        if (line.stockItemId) {
-          ops.push(
-            tx.stockItem.update({
-              where: { id: line.stockItemId },
-              data: { units: { decrement: line.quantity } },
-            })
-          );
-        }
-        return ops;
       })
     );
 
@@ -143,17 +142,10 @@ export async function POST(request: NextRequest) {
 }
 
 async function findRecordForResponse(id: string) {
-  try {
-    return await prisma.dailyRecord.findUnique({
-      where: { id },
-      include: { sales: { include: { saleItems: true } } },
-    });
-  } catch {
-    return prisma.dailyRecord.findUnique({
-      where: { id },
-      include: { sales: true },
-    });
-  }
+  return prisma.dailyRecord.findUnique({
+    where: { id },
+    include: { sales: { include: { saleItems: true } } },
+  });
 }
 
 function handleSalesError(error: unknown) {
